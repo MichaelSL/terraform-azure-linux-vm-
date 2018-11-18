@@ -29,10 +29,14 @@ If Azure CLI already installed - `az login`
 ## Provisioning
 
 1. Clone to git repository and run the module directly
+1. Create a new Terraform module that sources this remote module
 
 ### Run module directly
 
 Clone this repository...
+```
+$ git clone https://github.com/MichaelSL/terraform-azure-linux-vm-.git
+```
 
 Navigate your terminal to this module's root directory. It's wise to first see what Terraform will do in your subscription...
 
@@ -46,6 +50,24 @@ If you are satisfied, then start the provisioning process...
 terraform apply -var "name_prefix=azlinux" -var "hostname=azlinux$(echo $RANDOM)" -var "ssh_public_key=$(cat ~/.ssh/id_rsa.pub)"
 ```
 
+### Source this remote module
+
+This is approach #2 from above. You can create a base module locally to source this module...
+
+```hcl
+module "azlinuxvm" {
+  source = "github.com/MichaelSL/terraform-azure-linux-vm-"
+
+  name_prefix    = "myprefix"
+  hostname       = "myhostname"
+  ssh_public_key = "${file("/home/yourlocaluser/.ssh/id_rsa.pub")}"
+}
+```
+
+Then run `terraform get` to pull this module, and `terraform plan` to see what will happen, and lastly `terraform apply` to kick off the provisioning.
+
+## Variables
+
 > :bulb: As you can see here, there are three required variables (and only three): 
 * `name_prefix` (what to prefix your Azure resources with)
 * `hostname` (this will be the public DNS name, recommended to randomize it to prevent likeliness of collisions)
@@ -54,3 +76,7 @@ terraform apply -var "name_prefix=azlinux" -var "hostname=azlinux$(echo $RANDOM)
 ## Output
 
 After you run this Terraform module, there will be two outputs: `admin_username` and `vm_fqdn`. These two pieces are what you need to then immediately ssh into your new Linux machine.
+
+## Kudos
+
+This repository is based on [Microsoft docs](https://docs.microsoft.com) and [this](https://github.com/trstringer/terraform-azure-linux-vm) terraform template.
